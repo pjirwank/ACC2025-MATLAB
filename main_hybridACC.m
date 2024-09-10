@@ -76,7 +76,7 @@ B = inv(B_inv);
 noise = 1; % 0 = no noise, 1 = noisy measurements
 
 maxNoisyRotationAngle = (10)*(pi/180); % rad
-maxNoisyAngvelMagnitude = 0.005; % rad/s
+maxNoisyAngvelMagnitude = 0.05; % rad/s
 
 noisyAxis_init = rand(3,1);
 noisyAxis_init = noisyAxis_init/norm(noisyAxis_init); % unit vector
@@ -173,16 +173,16 @@ for i=1:1:N-1
         noisyRy = fun_axisangle(noisyAngle, noisyAxis);
         
         % set gyroscope measurement noise
-        if fun_potential(Rtilde_PCF_array(:,:,i)) > 0.999
+        if fun_potential(Rtilde_PCF_array(:,:,i)) > 0.9999
 %             fprintf('case 1 \n')
             axis_Rtilde_PCF = fun_findaxis(Rtilde_PCF_array(:,:,i));
             sinTheta = sin(2*asin(fun_potential(Rtilde_PCF_array(:,:,i))));
-            noisyAngvel = sinTheta * axis_Rtilde_PCF;
+            noisyAngvel = maxNoisyAngvelMagnitude*sinTheta * axis_Rtilde_PCF;
         else
 %             fprintf('case 2\n')
             axis_Rtilde_PCF = fun_findaxis(Rtilde_PCF_array(:,:,i));
             sinTheta = sin(2*asin(fun_potential(Rtilde_PCF_array(:,:,i))));
-            noisyAngvel = -sign(sinTheta) * axis_Rtilde_PCF;
+            noisyAngvel = -maxNoisyAngvelMagnitude*sign(sinTheta) * axis_Rtilde_PCF;
         end
         
 %         noisyAngvel_direction = rand(3,1);
@@ -251,9 +251,7 @@ close all;
 
 figure(1)
 plot(time, potential_Rbar, 'LineWidth', 2)
-if number_of_jumps == 0
-    return;
-else
+if number_of_jumps > 0
     for i=1:1:number_of_jumps
         ind = jump_index(i);
         hold on;
