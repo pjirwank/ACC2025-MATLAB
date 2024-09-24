@@ -78,23 +78,6 @@ noise = 1; % 0 = no noise, 1 = noisy measurements
 maxNoisyRotationAngle = (10)*(pi/180); % rad
 maxNoisyAngvelMagnitude = 0.05; % rad/s
 
-noisyAxis_init = rand(3,1);
-noisyAxis_init = noisyAxis_init/norm(noisyAxis_init); % unit vector
-noisyAngle_init = -maxNoisyRotationAngle + 2*maxNoisyRotationAngle*rand();
-
-if noise == 0
-    noisyRy_init = eye(3);
-    noisyAngvel_init = zeros(3,1);
-elseif noise == 1
-    noisyRy_init = fun_axisangle(noisyAngle_init, noisyAxis_init);
-    noisyAngvel_direction = rand(3,1);
-    noisyAngvel_direction = noisyAngvel_direction/norm(noisyAngvel_direction);
-    noisyAngvel_magnitude = -maxNoisyAngvelMagnitude + 2*maxNoisyAngvelMagnitude*rand();
-    noisyAngvel_init = noisyAngvel_magnitude * noisyAngvel_direction;
-else
-    error('Wrong input for "noise".')
-end
-
 %% Initializations
 
 start_time = 0;
@@ -105,7 +88,7 @@ h = time(2) - time(1);
 
 % initializations
 R_init      = eye(3);
-Rhat_init   = fun_axisangle((180)*(pi/180), [1;0;0]);
+Rhat_init   = fun_axisangle((100)*(pi/180), [1;0;0]);
 Rtilde_init = Rhat_init' * R_init;
 Rbar_init   = Rhat_init * R_init';
 q_init      = 1;
@@ -170,7 +153,7 @@ potential_Rbar_EKF(1) = fun_potential(Rbar_init);
 P_array = zeros(3,3,N); % filter error covariance for EKF
 P_array(:,:,1) = (1e-5)*eye(3);
 
-cov_Ry = 1e-6*eye(3); % covariance matrix for attitude measurement error
+cov_Ry = (1e-2)*eye(3); % covariance matrix for attitude measurement error
 
 %% Main loop
 
@@ -184,6 +167,7 @@ for i=1:1:N-1
         noisyAngvel_EKF = zeros(3,1);
     elseif noise == 1
         
+        %%%%%%%%%% set noise for PCF %%%%%%%%%%
         % set attitude measurement noise
         noisyAxis = rand(3,1);
         noisyAxis = noisyAxis/norm(noisyAxis); % unit vector
@@ -197,7 +181,7 @@ for i=1:1:N-1
             sinTheta = sin(2*asin(fun_potential(Rtilde_PCF_array(:,:,i))));
             noisyAngvel = maxNoisyAngvelMagnitude * sinTheta * axis_Rtilde_PCF;
         else
-%             fprintf('case 2\n')
+%             fprintf('case 2 \n')
             axis_Rtilde_PCF = fun_findaxis(Rtilde_PCF_array(:,:,i));
             sinTheta = sin(2*asin(fun_potential(Rtilde_PCF_array(:,:,i))));
             noisyAngvel = -maxNoisyAngvelMagnitude * sign(sinTheta) * axis_Rtilde_PCF;
@@ -207,10 +191,15 @@ for i=1:1:N-1
         %%%%%%%%%% set noise for EKF %%%%%%%%%%
         Rtilde_EKF_angle = real((acos(1 - 2*(potential_Rbar_EKF(i)))))*(180/pi);
         axis = fun_findaxis(Rtilde_EKF_array(:,:,i));
-        if potential_Rbar_EKF(i) > 0.9999
-            noisyAngvel_EKF = -maxNoisyAngvelMagnitude * sign(sin(Rtilde_EKF_angle*pi/180.))*axis;
+        % if potential_Rbar_EKF(i) < 0.9999
+        %     noisyAngvel_EKF = -maxNoisyAngvelMagnitude * sign(sin(Rtilde_EKF_angle))*axis;
+        % else
+        %     noisyAngvel_EKF = maxNoisyAngvelMagnitude * sin(Rtilde_EKF_angle)*axis;
+        % end
+        if potential_Rbar_EKF(i) < 0.9999
+            noisyAngvel_EKF = -sign(sin(Rtilde_EKF_angle))*axis;
         else
-            noisyAngvel_EKF = maxNoisyAngvelMagnitude * sin(Rtilde_EKF_angle*pi/180.)*axis;
+            noisyAngvel_EKF = sin(Rtilde_EKF_angle)*axis;
         end
         
         noisyAngle_EKF = -maxNoisyRotationAngle + 2*maxNoisyRotationAngle*rand();
@@ -268,12 +257,14 @@ for i=1:1:N-1
     R_array(:,:,i+1) = R_next;
     Rhat_array(:,:,i+1) = Rhat_next;
     Rhat_PCF_array(:,:,i+1) = Rhat_PCF_next;
+    Rhat_EKF_array(:,:,1+1) = Rhat_EKF_next;
     Rtilde_array(:,:,i+1) = Rtilde_next;
     Rbar_array(:,:,i+1) = Rbar_next;
-    Rbar_PCF_array(:,:,i+1) = Rbar_PCF_next;
     Rtilde_PCF_array(:,:,i+1) = Rtilde_PCF_next;
-    Rbar_EKF_array(:,:,i+1) = Rbar_EKF_next;
+    Rbar_PCF_array(:,:,i+1) = Rbar_PCF_next;
     Rtilde_EKF_array(:,:,i+1) = Rtilde_EKF_next;
+    Rbar_EKF_array(:,:,i+1) = Rbar_EKF_next;
+    P_array(:,:,i+1) = P_next;
     jumps(i+1) = jump_next;
     
     potential_Rbar(i+1) = fun_potential(Rbar_next);
@@ -339,24 +330,24 @@ legend(legend_labels);
 ylim([0, 1.1])
 grid on
 
-figure(2)
-plot(time, q_array, 'o')
-if number_of_jumps == 0
-    return;
-else
-    for i=1:1:number_of_jumps
-        ind = jump_index(i);
-        hold on;
-        plot(time(ind), q_array(ind), 'color', 'red', 'marker','x', 'linewidth', 2, 'MarkerSize',12);
-        hold on;
-        plot(time(ind+1), q_array(ind+1), 'color', 'red', 'marker','o', 'linewidth', 1, 'MarkerSize',9);
-        hold on;
-        plot([time(ind) time(ind+1)], [q_array(ind) q_array(ind+1)], '--r', 'LineWidth', 2);
-    end
-end
-ax = gca;
-ax.FontSize = 20;
-xlabel("$t \: [s]$", 'Interpreter', 'latex', 'FontSize', 35)
-ylabel({'$q$'}, 'interpreter', 'latex', 'FontSize', 35)
-yticks([0,1])
-grid on
+% figure(2)
+% plot(time, q_array, 'o')
+% if number_of_jumps == 0
+%     return;
+% else
+%     for i=1:1:number_of_jumps
+%         ind = jump_index(i);
+%         hold on;
+%         plot(time(ind), q_array(ind), 'color', 'red', 'marker','x', 'linewidth', 2, 'MarkerSize',12);
+%         hold on;
+%         plot(time(ind+1), q_array(ind+1), 'color', 'red', 'marker','o', 'linewidth', 1, 'MarkerSize',9);
+%         hold on;
+%         plot([time(ind) time(ind+1)], [q_array(ind) q_array(ind+1)], '--r', 'LineWidth', 2);
+%     end
+% end
+% ax = gca;
+% ax.FontSize = 20;
+% xlabel("$t \: [s]$", 'Interpreter', 'latex', 'FontSize', 35)
+% ylabel({'$q$'}, 'interpreter', 'latex', 'FontSize', 35)
+% yticks([0,1])
+% grid on
