@@ -6,7 +6,7 @@ if norm(axis) > 0.9999 && norm(axis) < 1.0001
     axiscross = fun_cross(axis);
     output = eye(3) + axiscross * sin(angle) + axiscross^2. * (1. - cos(angle));
 else
-    error("Axis is not a unit vector")
+    error("axis is not a unit vector")
 end
 end
 
