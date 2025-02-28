@@ -293,14 +293,14 @@ if number_of_jumps > 0
     end
 end
 hold on
-plot(time, potential_Rbar_PCF, 'color', 'black', 'LineWidth', 2)
+plot(time, potential_Rbar_PCF, '*-k','MarkerSize', 8, 'MarkerIndices', 150:300:length(time), 'LineWidth', 2)
 hold on
-plot(time, potential_Rbar_EKF, '--m', 'LineWidth', 2)
+plot(time, potential_Rbar_EKF, 'o-m','MarkerSize', 8, 'MarkerIndices', 1:300:length(time), 'LineWidth', 2)
 ax = gca;
 ax.FontSize = 20;
 legend('Hybrid Filter', '', '', '', '', '', '', 'PCF', 'EKF', 'Interpreter', 'latex', 'FontSize', 35)
 xlabel("$t \: [s]$", 'Interpreter', 'latex', 'FontSize', 35)
-ylabel({'$|\bar{R}|_I $'}, 'interpreter', 'latex', 'FontSize', 35)
+ylabel({'$|\widetilde{R}|_I $'}, 'interpreter', 'latex', 'FontSize', 35)
 ylim([0, 1.1])
 grid on
 
