@@ -282,7 +282,6 @@ end
 
 number_of_jumps = length(jump_index);
 
-%% plots
 
 %% Plots
 
@@ -290,54 +289,57 @@ clf;
 close all;
 
 
-figure(3)
-plot(time(1:end-1), noise_angvel_magnitude_PCF(1:end-1))
-
+% figure(3)
+% plot(time(1:end-1), noise_angvel_magnitude_PCF(1:end-1))
+% 
 
 
 figure(1)
-plot(time, potential_Rbar, 'LineWidth', 2)
-if number_of_jumps > 0
-    for i=1:1:number_of_jumps
-        ind = jump_index(i);
-        hold on;
-        plot(time(ind), potential_Rbar(ind), 'color', 'red', 'marker','x', 'linewidth', 2, 'MarkerSize',12);
-        hold on;
-        plot(time(ind+1), potential_Rbar(ind+1), 'color', 'red', 'marker','o', 'linewidth', 1, 'MarkerSize',9);
-        hold on;
-        plot([time(ind) time(ind+1)], [potential_Rbar(ind) potential_Rbar(ind+1)], '--r', 'LineWidth', 2);
-    end
-end
-hold on
+% plot(time, potential_Rbar, 'LineWidth', 2)
+% if number_of_jumps > 0
+%     for i=1:1:number_of_jumps
+%         ind = jump_index(i);
+%         hold on;
+%         plot(time(ind), potential_Rbar(ind), 'color', 'red', 'marker','x', 'linewidth', 2, 'MarkerSize',12);
+%         hold on;
+%         plot(time(ind+1), potential_Rbar(ind+1), 'color', 'red', 'marker','o', 'linewidth', 1, 'MarkerSize',9);
+%         hold on;
+%         plot([time(ind) time(ind+1)], [potential_Rbar(ind) potential_Rbar(ind+1)], '--r', 'LineWidth', 2);
+%     end
+% end
+% hold on
 plot(time, potential_Rbar_PCF, '*-k','MarkerSize', 8, 'MarkerIndices', 150:300:length(time), 'LineWidth', 2)
-hold on
-plot(time, potential_Rbar_EKF, 'o-m','MarkerSize', 8, 'MarkerIndices', 1:300:length(time), 'LineWidth', 2)
+% hold on
+% plot(time, potential_Rbar_EKF, 'o-m','MarkerSize', 8, 'MarkerIndices', 1:300:length(time), 'LineWidth', 2)
 ax = gca;
 ax.FontSize = 20;
-legend('Hybrid Filter', '', '', '', '', '', '', 'PCF', 'EKF', 'Interpreter', 'latex', 'FontSize', 35)
+h = legend('PCF', 'Interpreter', 'latex', 'FontSize', 35);
+pos = h.Position;              % Get current [x, y, width, height]
+pos(1:2) = [0.68, 0.7];         % Set new x and y, keep width and height
+h.Position = pos;
 xlabel("$t \: [s]$", 'Interpreter', 'latex', 'FontSize', 35)
 ylabel({'$d(\hat{R}, R)$'}, 'interpreter', 'latex', 'FontSize', 35)
 ylim([0, 1.1])
 grid on
 
-figure(2)
-plot(time, q_array, 'o')
-if number_of_jumps == 0
-    return;
-else
-    for i=1:1:number_of_jumps
-        ind = jump_index(i);
-        hold on;
-        plot(time(ind), q_array(ind), 'color', 'red', 'marker','x', 'linewidth', 2, 'MarkerSize',12);
-        hold on;
-        plot(time(ind+1), q_array(ind+1), 'color', 'red', 'marker','o', 'linewidth', 1, 'MarkerSize',9);
-        hold on;
-        plot([time(ind) time(ind+1)], [q_array(ind) q_array(ind+1)], '--r', 'LineWidth', 2);
-    end
-end
-ax = gca;
-ax.FontSize = 20;
-xlabel("$t \: [s]$", 'Interpreter', 'latex', 'FontSize', 35)
-ylabel({'$q$'}, 'interpreter', 'latex', 'FontSize', 35)
-yticks([0,1])
-grid on
+% figure(2)
+% plot(time, q_array, 'o')
+% if number_of_jumps == 0
+%     return;
+% else
+%     for i=1:1:number_of_jumps
+%         ind = jump_index(i);
+%         hold on;
+%         plot(time(ind), q_array(ind), 'color', 'red', 'marker','x', 'linewidth', 2, 'MarkerSize',12);
+%         hold on;
+%         plot(time(ind+1), q_array(ind+1), 'color', 'red', 'marker','o', 'linewidth', 1, 'MarkerSize',9);
+%         hold on;
+%         plot([time(ind) time(ind+1)], [q_array(ind) q_array(ind+1)], '--r', 'LineWidth', 2);
+%     end
+% end
+% ax = gca;
+% ax.FontSize = 20;
+% xlabel("$t \: [s]$", 'Interpreter', 'latex', 'FontSize', 35)
+% ylabel({'$q$'}, 'interpreter', 'latex', 'FontSize', 35)
+% yticks([0,1])
+% grid on
